@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
   s.authors = { "Nick O'Neill" => 'nick.oneill@gmail.com' }
   s.source = { :git => 'https://github.com/nickoneill/PermissionScope.git', :tag => s.version }
 
-  s.ios.deployment_target = '8.0'
+  s.ios.deployment_target = '10.0'
 
   s.source_files = 'PermissionScope/*.swift'
 
