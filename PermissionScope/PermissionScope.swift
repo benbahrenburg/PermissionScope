@@ -8,6 +8,7 @@
 
 import UIKit
 import Photos
+import UserNotifications
 
 public typealias statusRequestClosure = (_ status: PermissionStatus) -> Void
 public typealias authClosureType      = (_ finished: Bool, _ results: [PermissionResult]) -> Void
@@ -372,17 +373,16 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
      
      - returns: Permission status for the requested type.
      */
-    public func statusNotifications() -> PermissionStatus {
-        let settings = UIApplication.shared.currentUserNotificationSettings
-        if let settingTypes = settings?.types , settingTypes != UIUserNotificationType() {
-            return .authorized
-        } else {
-            if defaults.bool(forKey: Constants.NSUserDefaultsKeys.requestedNotifications) {
-                return .unauthorized
-            } else {
-                return .unknown
+    open func statusNotifications(completionHandler: @escaping (_ status: PermissionStatus) -> Void) {
+        UNUserNotificationCenter.current().getNotificationSettings(completionHandler: { (settings) in
+            if settings.authorizationStatus == .authorized {
+                completionHandler(PermissionStatus.authorized)
+            } else if settings.authorizationStatus == .denied {
+                completionHandler(PermissionStatus.unauthorized)
+            } else if settings.authorizationStatus == .notDetermined {
+                completionHandler(PermissionStatus.unknown)
             }
-        }
+        })
     }
     
     /**
@@ -454,28 +454,25 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
     /**
      Requests access to User Notifications, if necessary.
      */
-    public func requestNotifications() {
-        let status = statusNotifications()
-        switch status {
-        case .unknown:
-            let notificationsPermission = self.configuredPermissions
-                .first { $0 is NotificationsPermission } as? NotificationsPermission
-            let notificationsPermissionSet = notificationsPermission?.notificationCategories
-            
-            NotificationCenter.default.addObserver(self, selector: #selector(showingNotificationPermission), name: NSNotification.Name.UIApplicationWillResignActive, object: nil)
-            
-            notificationTimer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(finishedShowingNotificationPermission), userInfo: nil, repeats: false)
-            
-            UIApplication.shared.registerUserNotificationSettings(
-                UIUserNotificationSettings(types: [.alert, .sound, .badge],
-                                           categories: notificationsPermissionSet)
-            )
-        case .unauthorized:
-            showDeniedAlert(.notifications)
-        case .disabled:
-            showDisabledAlert(.notifications)
-        case .authorized:
-            detectAndCallback()
+    open func requestNotifications() {
+        statusNotifications() { status in
+            switch status {
+            case .unknown:
+                NotificationCenter.default.addObserver(self, selector: #selector(self.showingNotificationPermission), name: NSNotification.Name.UIApplicationWillResignActive, object: nil)
+                
+                self.notificationTimer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(self.finishedShowingNotificationPermission), userInfo: nil, repeats: false)
+                
+                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound], completionHandler: { (success, error) in
+                    self.detectAndCallback()
+                })
+                return
+            case .unauthorized:
+                self.showDeniedAlert(.notifications)
+            case .disabled:
+                self.showDisabledAlert(.notifications)
+            case .authorized:
+                self.detectAndCallback()
+            }
         }
     }
     
@@ -669,11 +666,7 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         return false
     }
     
-    // MARK: Location delegate
     
-    public func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        detectAndCallback()
-    }
     
     // MARK: Bluetooth delegate
     // MARK: - UI Helpers
@@ -716,7 +709,9 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
                                         NotificationCenter.default.addObserver(self, selector: #selector(self.appForegroundedAfterSettings), name: NSNotification.Name.UIApplicationDidBecomeActive, object: nil)
                                         
                                         let settingsUrl = URL(string: UIApplicationOpenSettingsURLString)
-                                        UIApplication.shared.openURL(settingsUrl!)
+                                        UIApplication.shared.open(settingsUrl!, options: [:],
+                                                                  completionHandler: {(_) in
+                                        })
         }))
         
         DispatchQueue.main.async {
@@ -750,7 +745,9 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
                                         NotificationCenter.default.addObserver(self, selector: #selector(self.appForegroundedAfterSettings), name: NSNotification.Name.UIApplicationDidBecomeActive, object: nil)
                                         
                                         let settingsUrl = URL(string: UIApplicationOpenSettingsURLString)
-                                        UIApplication.shared.openURL(settingsUrl!)
+                                        UIApplication.shared.open(settingsUrl!, options: [:],
+                                                                  completionHandler: {(_) in
+                                        })
         }))
         
         DispatchQueue.main.async {
@@ -779,22 +776,24 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
      - parameter type:       Permission type to be requested
      - parameter completion: Closure called when the request is done.
      */
-    func statusForPermission(_ type: PermissionType, completion: statusRequestClosure) {
-        // Get permission status
-        let permissionStatus: PermissionStatus
-        switch type {
-        case .notifications:
-            permissionStatus = statusNotifications()
-        case .camera:
-            permissionStatus = statusCamera()
-        case .photos:
-            permissionStatus = statusPhotos()
-        default:
-            permissionStatus = statusPhotos()
+    func statusForPermission(_ type: PermissionType, completion: @escaping statusRequestClosure) {
+        if(type == .notifications) {
+            statusNotifications() { completion($0) }
+        } else {
+            // Get permission status
+            let permissionStatus: PermissionStatus
+            switch type {
+            case .camera:
+                permissionStatus = statusCamera()
+            case .photos:
+                permissionStatus = statusPhotos()
+            default:
+                permissionStatus = statusPhotos()
+            }
+            
+            // Perform completion
+            completion(permissionStatus)
         }
-        
-        // Perform completion
-        completion(permissionStatus)
     }
     
     /**
