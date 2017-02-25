@@ -40,7 +40,7 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
     /// Font used for all the UILabels
     public var labelFont:UIFont             = .systemFont(ofSize: 14)
     /// Close button. By default in the top right corner.
-    public var closeButton                  = UIButton(frame: CGRect(x: 0, y: 0, width: 50, height: 32))
+    public var closeButton                  = UIButton(frame: CGRect(x: 0, y: 0, width: 80, height: 32))
     /// Offset used to position the Close button.
     public var closeOffset                  = CGSize.zero
     /// Color used for permission buttons with authorized status
@@ -233,7 +233,7 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         
         closeButton.center = contentView.center
         closeButton.frame.offsetInPlace(dx: -contentView.frame.origin.x, dy: -contentView.frame.origin.y)
-        closeButton.frame.offsetInPlace(dx: 105, dy: -((dialogHeight/2)-20))
+        closeButton.frame.offsetInPlace(dx: 85, dy: -((dialogHeight/2)-20))
         closeButton.frame.offsetInPlace(dx: self.closeOffset.width, dy: self.closeOffset.height)
         if let _ = closeButton.imageView?.image {
             closeButton.setTitle("", for: .normal)
