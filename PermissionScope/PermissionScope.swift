@@ -163,6 +163,8 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         headerLabel.textAlignment = NSTextAlignment.center
         headerLabel.text = "Hey, listen!".localized
         headerLabel.accessibilityIdentifier = "permissionscope.headerlabel"
+        headerLabel.adjustsFontSizeToFitWidth = true
+        headerLabel.allowsDefaultTighteningForTruncation = true
         
         contentView.addSubview(headerLabel)
         
@@ -173,6 +175,8 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         bodyLabel.text = "We need a couple things\r\nbefore you get started.".localized
         bodyLabel.numberOfLines = 2
         bodyLabel.accessibilityIdentifier = "permissionscope.bodylabel"
+        bodyLabel.adjustsFontSizeToFitWidth = true
+        bodyLabel.allowsDefaultTighteningForTruncation = true
         
         contentView.addSubview(bodyLabel)
         
@@ -225,11 +229,15 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         headerLabel.center = contentView.center
         headerLabel.frame.offsetInPlace(dx: -contentView.frame.origin.x, dy: -contentView.frame.origin.y)
         headerLabel.frame.offsetInPlace(dx: 0, dy: -((dialogHeight/2)-50))
+        headerLabel.adjustsFontSizeToFitWidth = true
+        headerLabel.allowsDefaultTighteningForTruncation = true
         
         // ... same with the body
         bodyLabel.center = contentView.center
         bodyLabel.frame.offsetInPlace(dx: -contentView.frame.origin.x, dy: -contentView.frame.origin.y)
         bodyLabel.frame.offsetInPlace(dx: 0, dy: -((dialogHeight/2)-100))
+        bodyLabel.adjustsFontSizeToFitWidth = true
+        bodyLabel.allowsDefaultTighteningForTruncation = true
         
         closeButton.center = contentView.center
         closeButton.frame.offsetInPlace(dx: -contentView.frame.origin.x, dy: -contentView.frame.origin.y)
@@ -246,6 +254,8 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
             button.center = contentView.center
             button.frame.offsetInPlace(dx: -contentView.frame.origin.x, dy: -contentView.frame.origin.y)
             button.frame.offsetInPlace(dx: 0, dy: -((dialogHeight/2)-160) + CGFloat(index * baseOffset))
+            button.titleLabel?.adjustsFontSizeToFitWidth = true
+            button.titleLabel?.allowsDefaultTighteningForTruncation = true
             
             let type = configuredPermissions[index].type
             
