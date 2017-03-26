@@ -9,6 +9,8 @@
 import UIKit
 import Photos
 import UserNotifications
+import AddressBook
+import Contacts
 
 public typealias statusRequestClosure = (_ status: PermissionStatus) -> Void
 public typealias authClosureType      = (_ finished: Bool, _ results: [PermissionResult]) -> Void
@@ -374,10 +376,61 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
     
     // MARK: - Status and Requests for each permission
     
+    // MARK: Contacts
+    
+    /**
+     Returns the current permission status for accessing Contacts.
+     
+     - returns: Permission status for the requested type.
+     */
+    public func statusContacts() -> PermissionStatus {
+        if #available(iOS 9.0, *) {
+            let status = CNContactStore.authorizationStatus(for: .contacts)
+            switch status {
+            case .authorized:
+                return .authorized
+            case .restricted, .denied:
+                return .unauthorized
+            case .notDetermined:
+                return .unknown
+            }
+        } else {
+            // Fallback on earlier versions
+            let status = ABAddressBookGetAuthorizationStatus()
+            switch status {
+            case .authorized:
+                return .authorized
+            case .restricted, .denied:
+                return .unauthorized
+            case .notDetermined:
+                return .unknown
+            }
+        }
+    }
+    
     /**
      Requests access to Contacts, if necessary.
      */
-    public func requestContacts() { }
+    public func requestContacts() {
+        let status = statusContacts()
+        switch status {
+        case .unknown:
+            if #available(iOS 9.0, *) {
+                CNContactStore().requestAccess(for: .contacts, completionHandler: {
+                    success, error in
+                    self.detectAndCallback()
+                })
+            } else {
+                ABAddressBookRequestAccessWithCompletion(nil) { success, error in
+                    self.detectAndCallback()
+                }
+            }
+        case .unauthorized:
+            self.showDeniedAlert(.contacts)
+        default:
+            break
+        }
+    }
     
     // MARK: Notifications
     
@@ -846,6 +899,8 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         // Get permission status
         let permissionStatus: PermissionStatus
         switch type {
+        case .contacts:
+            permissionStatus = statusContacts()
         case .notifications:
             permissionStatus = statusNotifications()
         case .camera:

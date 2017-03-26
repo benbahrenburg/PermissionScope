@@ -9,6 +9,8 @@
 import Foundation
 import Photos
 import UserNotifications
+import AddressBook
+import Contacts
 
 /**
 *  Protocol for permission configurations.
@@ -36,4 +38,8 @@ public typealias requestPermissionShowAlert     = (PermissionType) -> Void
 
 @objc public class PhotosPermission: NSObject, Permission {
     public let type: PermissionType = .photos
+}
+
+@objc public class ContactsPermission: NSObject, Permission {
+    public let type: PermissionType = .contacts
 }
