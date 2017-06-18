@@ -411,7 +411,7 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
     /**
      Requests access to Contacts, if necessary.
      */
-    public func requestContacts() {
+    @objc public func requestContacts() {
         let status = statusContacts()
         switch status {
         case .unknown:
@@ -515,7 +515,7 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
     /**
      Requests access to User Notifications, if necessary.
      */
-    public func requestNotifications() {
+    @objc public func requestNotifications() {
         let status = statusNotifications()
         switch status {
         case .unknown:
@@ -609,7 +609,7 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
     /**
      Requests access to the Camera, if necessary.
      */
-    public func requestCamera() {
+    @objc public func requestCamera() {
         let status = statusCamera()
         switch status {
         case .unknown:
@@ -648,7 +648,7 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
     /**
      Requests access to Photos, if necessary.
      */
-    public func requestPhotos() {
+    @objc public func requestPhotos() {
         let status = statusPhotos()
         switch status {
         case .unknown:
