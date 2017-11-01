@@ -11,6 +11,7 @@ import Photos
 import UserNotifications
 import AddressBook
 import Contacts
+import EventKit
 
 /**
 *  Protocol for permission configurations.
@@ -42,4 +43,8 @@ public typealias requestPermissionShowAlert     = (PermissionType) -> Void
 
 @objc public class ContactsPermission: NSObject, Permission {
     public let type: PermissionType = .contacts
+}
+
+@objc public class EventsPermission: NSObject, Permission {
+    public let type: PermissionType = .events
 }
