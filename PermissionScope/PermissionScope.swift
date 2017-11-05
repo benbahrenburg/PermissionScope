@@ -687,7 +687,7 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
     /**
      Requests access to Events, if necessary.
      */
-    public func requestEvents() {
+    @objc public func requestEvents() {
         let status = statusEvents()
         switch status {
         case .unknown:
