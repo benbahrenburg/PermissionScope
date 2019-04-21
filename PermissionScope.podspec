@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'PermissionScope'
-  s.version = '1.1.2'
+  s.version = '2.1.2'
   s.license = 'MIT'
   s.summary = 'A Periscope-inspired way to ask for iOS permissions'
   s.homepage = 'https://github.com/nickoneill/PermissionScope'
@@ -8,9 +8,9 @@ Pod::Spec.new do |s|
   s.authors = { "Nick O'Neill" => 'nick.oneill@gmail.com' }
   s.source = { :git => 'https://github.com/nickoneill/PermissionScope.git', :tag => s.version }
 
-  s.ios.deployment_target = '10.0'
-
+  s.ios.deployment_target = '11.0'
+  s.swift_version = "5.0"
   s.source_files = 'PermissionScope/*.swift'
-
+  s.pod_target_xcconfig = { 'SWIFT_VERSION' => '5.0' }
   s.requires_arc = true
 end
