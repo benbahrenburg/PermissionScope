@@ -48,3 +48,7 @@ public typealias requestPermissionShowAlert     = (PermissionType) -> Void
 @objc public class EventsPermission: NSObject, Permission {
     public let type: PermissionType = .events
 }
+
+@objc public class RemindersPermission: NSObject, Permission {
+    public let type: PermissionType = .reminders
+}

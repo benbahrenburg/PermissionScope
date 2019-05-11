@@ -385,27 +385,16 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
      - returns: Permission status for the requested type.
      */
     public func statusContacts() -> PermissionStatus {
-        if #available(iOS 9.0, *) {
-            let status = CNContactStore.authorizationStatus(for: .contacts)
-            switch status {
-            case .authorized:
-                return .authorized
-            case .restricted, .denied:
-                return .unauthorized
-            case .notDetermined:
-                return .unknown
-            }
-        } else {
-            // Fallback on earlier versions
-            let status = ABAddressBookGetAuthorizationStatus()
-            switch status {
-            case .authorized:
-                return .authorized
-            case .restricted, .denied:
-                return .unauthorized
-            case .notDetermined:
-                return .unknown
-            }
+        let status = CNContactStore.authorizationStatus(for: .contacts)
+        switch status {
+        case .authorized:
+            return .authorized
+        case .restricted, .denied:
+            return .unauthorized
+        case .notDetermined:
+            return .unknown
+        default:
+            return .unknown
         }
     }
     
@@ -416,16 +405,10 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         let status = statusContacts()
         switch status {
         case .unknown:
-            if #available(iOS 9.0, *) {
-                CNContactStore().requestAccess(for: .contacts, completionHandler: {
-                    success, error in
-                    self.detectAndCallback()
-                })
-            } else {
-                ABAddressBookRequestAccessWithCompletion(nil) { success, error in
-                    self.detectAndCallback()
-                }
-            }
+            CNContactStore().requestAccess(for: .contacts, completionHandler: {
+                success, error in
+                self.detectAndCallback()
+            })
         case .unauthorized:
             self.showDeniedAlert(.contacts)
         default:
@@ -538,44 +521,27 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
      */
     fileprivate func triggerNotificationStatusUpdate() {
         let tmpNotificationPermissionStatus = notificationsPermissionStatus
-        
-        if #available(iOS 10.0, *) {
-            askedNotifications = true
-            waitingForNotification = true
-            defaults.set(true, forKey: Constants.NSUserDefaultsKeys.requestedNotifications)
-            defaults.synchronize()
-            UNUserNotificationCenter.current().getNotificationSettings(completionHandler: { (settings) in
-                if settings.authorizationStatus == .authorized {
-                    self.notificationsPermissionStatus = .authorized
-                } else if settings.authorizationStatus == .denied {
-                    self.notificationsPermissionStatus = .unauthorized
-                } else if settings.authorizationStatus == .notDetermined {
-                    self.notificationsPermissionStatus = .unknown
-                }
-                self.waitingForNotification = false
-                if tmpNotificationPermissionStatus != self.notificationsPermissionStatus {
-                    self.detectAndCallback()
-                }
-            })
-        } else {
-            // Fallback on earlier versions
-            let settings = UIApplication.shared.currentUserNotificationSettings
-            if let settingTypes = settings?.types , settingTypes != UIUserNotificationType() {
+        askedNotifications = true
+        waitingForNotification = true
+        defaults.set(true, forKey: Constants.NSUserDefaultsKeys.requestedNotifications)
+        defaults.synchronize()
+        UNUserNotificationCenter.current().getNotificationSettings(completionHandler: { (settings) in
+            if settings.authorizationStatus == .authorized {
                 self.notificationsPermissionStatus = .authorized
-            } else {
-                if defaults.bool(forKey: Constants.NSUserDefaultsKeys.requestedNotifications) {
-                    self.notificationsPermissionStatus = .unauthorized
-                } else {
-                    self.notificationsPermissionStatus = .unknown
-                }
-                self.waitingForNotification = false
+            } else if settings.authorizationStatus == .denied {
+                self.notificationsPermissionStatus = .unauthorized
+            } else if settings.authorizationStatus == .notDetermined {
+                self.notificationsPermissionStatus = .unknown
+            }
+            self.waitingForNotification = false
+            if tmpNotificationPermissionStatus != self.notificationsPermissionStatus {
                 self.detectAndCallback()
             }
-        }
+        })
     }
     
     /// Returns whether Notification access was asked before or not.
-    fileprivate var askedNotifications:Bool {
+    private var askedNotifications:Bool {
         get {
             return defaults.bool(forKey: Constants.NSUserDefaultsKeys.requestedNotifications)
         }
@@ -586,7 +552,7 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
     }
     
     /// Returns whether PermissionScope is waiting for the user to enable/disable Notification access or not.
-    fileprivate var waitingForNotification = false
+    private var waitingForNotification = false
     
     // MARK: Camera
     
@@ -603,6 +569,8 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         case .restricted, .denied:
             return .unauthorized
         case .notDetermined:
+            return .unknown
+        default:
             return .unknown
         }
     }
@@ -643,6 +611,8 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
             return .unauthorized
         case .notDetermined:
             return .unknown
+        default:
+            return .unknown
         }
     }
     
@@ -664,7 +634,47 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
             break
         }
     }
-  
+
+    // MARK: Reminders
+    
+    /**
+     Returns the current permission status for accessing Reminders.
+     
+     - returns: Permission status for the requested type.
+     */
+    public func statusReminders() -> PermissionStatus {
+        let status = EKEventStore.authorizationStatus(for: .reminder)
+        switch status {
+        case .authorized:
+            return .authorized
+        case .restricted, .denied:
+            return .unauthorized
+        case .notDetermined:
+            return .unknown
+        default:
+            return .unknown
+        }
+    }
+    
+    /**
+     Requests access to Events, if necessary.
+     */
+    @objc public func requestReminders() {
+        let status = statusEvents()
+        switch status {
+        case .unknown:
+            EKEventStore().requestAccess(to: .reminder,
+                                         completion: { granted, error in
+                                            self.detectAndCallback()
+            })
+        case .unauthorized:
+            self.showDeniedAlert(.events)
+        default:
+            break
+        }
+    }
+    
+    
     // MARK: Events
     
     /**
@@ -680,6 +690,8 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
         case .restricted, .denied:
             return .unauthorized
         case .notDetermined:
+            return .unknown
+        default:
             return .unknown
         }
     }
@@ -947,6 +959,8 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
             permissionStatus = statusPhotos()
         case .events:
             permissionStatus = statusEvents()
+        case .reminders:
+            permissionStatus = statusReminders()
         default:
             permissionStatus = statusPhotos()
         }
@@ -1002,5 +1016,5 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
 
 // Helper function inserted by Swift 4.2 migrator.
 fileprivate func convertToUIApplicationOpenExternalURLOptionsKeyDictionary(_ input: [String: Any]) -> [UIApplication.OpenExternalURLOptionsKey: Any] {
-	return Dictionary(uniqueKeysWithValues: input.map { key, value in (UIApplication.OpenExternalURLOptionsKey(rawValue: key), value)})
+    return Dictionary(uniqueKeysWithValues: input.map { key, value in (UIApplication.OpenExternalURLOptionsKey(rawValue: key), value)})
 }
