@@ -634,7 +634,7 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
             break
         }
     }
-
+    
     // MARK: Reminders
     
     /**
@@ -651,16 +651,14 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
             return .unauthorized
         case .notDetermined:
             return .unknown
-        default:
-            return .unknown
         }
     }
     
     /**
-     Requests access to Events, if necessary.
+     Requests access to Reminders, if necessary.
      */
     @objc public func requestReminders() {
-        let status = statusEvents()
+        let status = statusReminders()
         switch status {
         case .unknown:
             EKEventStore().requestAccess(to: .reminder,
@@ -668,7 +666,7 @@ typealias resultsForConfigClosure     = ([PermissionResult]) -> Void
                                             self.detectAndCallback()
             })
         case .unauthorized:
-            self.showDeniedAlert(.events)
+            self.showDeniedAlert(.reminders)
         default:
             break
         }
